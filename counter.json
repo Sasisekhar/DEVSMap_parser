@@ -1,0 +1,85 @@
+{
+    "counter": {
+        "s": {
+            "count": "integer",
+            "increment": "integer_nonNeg",
+            "countUp": "boolean",
+            "sigma": "time"
+        },
+        "x": {
+            "direction_in": "boolean",
+            "increment_in": "integer_nonNeg"
+        },
+        "y": {
+            "count_out": "integer"
+        },
+        "delta_int": {
+            "countUp == true": {
+                "count": "count + increment"
+            },
+            "countUp == false": {
+                "count": "count - increment"
+            },
+            "otherwise": {}
+        },
+        "delta_ext": {
+            "direction_in != null": {
+                "countUp": "direction_in"
+            },
+            "increment_in != null": {
+                "increment": "increment_in"
+            },
+            "otherwise": {
+                "countUp": "direction_in",
+                "increment": "increment_in"
+            }
+        },
+        "delta_con": {
+            "direction_in != null": {
+                "direction_in == true": {
+                    "count": "count + increment",
+                    "countUp": "direction_in"
+                },
+                "direction_in == false": {
+                    "count": "count - increment",
+                    "countUp": "direction_in"
+                }
+            },
+            "increment_in != null": {
+                "countUp == true": {
+                    "count": "count + increment_in",
+                    "increment": "increment_in"
+                },
+                "countUp == false": {
+                    "count": "count - increment_in",
+                    "increment": "increment_in"
+                }
+            },
+            "otherwise": {
+                "direction_in == true": {
+                    "count": "count + increment_in",
+                    "increment": "increment_in",
+                    "countUp": "direction_in"
+                },
+                "direction_in == false": {
+                    "count": "count - increment_in",
+                    "increment": "increment_in",
+                    "countUp": "direction_in"
+                }
+            }
+        },
+        "lambda": {
+            "otherwise": {
+                "count_out": "count"
+            }
+        },
+        "ta": {
+            "otherwise": "sigma"
+        }
+    },
+    "include_sets": [
+        "default_sets.json",
+        "integer_nonNeg"
+    ],
+    "parameters": {}
+}
