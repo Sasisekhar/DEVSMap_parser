@@ -38,7 +38,9 @@ using json = nlohmann::json;
 const std::string fixed_keys[] = {"include_sets", "parameters"};
 
 const std::unordered_set<std::string> operators = {
-    "==", "!=", "<=", ">=", "<", ">", "&&", "||", "(", ")", "+", "-", "*", "/", "%"
+    "==", "!=", "<=", ">=", "<", ">", "&&", "||",
+    "(", ")", "+", "-", "*", "/", "%",
+    ".bag", ".bagSize"
 };
 
 ///////////////////////////////////DATATYPES///////////////////////////////////
@@ -46,17 +48,40 @@ const std::unordered_set<std::string> operators = {
 enum class TokenType {
     OPERATOR,
     STATE_VARIABLE,
+    INPUT_PORT,
+    OUTPUT_PORT,
     PARAMETER,
     CONSTANT,
     UNKNOWN
 };
+std::ostream& operator<<(std::ostream& out, const TokenType value){
+    std::string type;
+
+    if(value == TokenType::OPERATOR) {
+        type = "OPERATOR";
+    } else if(value == TokenType::STATE_VARIABLE) {
+        type = "STATE_VARIABLE";
+    }  else if(value == TokenType::INPUT_PORT) {
+        type = "INPUT_PORT";
+    } else if(value == TokenType::OUTPUT_PORT) {
+        type = "OUTPUT_PORT";
+    } else if(value == TokenType::PARAMETER) {
+        type = "PARAMETER";
+    } else if(value == TokenType::CONSTANT) {
+        type = "CONSTANT";
+    } else if(value == TokenType::UNKNOWN) {
+        type = "UNKNOWN";
+    }
+
+    return out << type;
+}
 
 struct Token {
     std::string value;
     TokenType type;
 };
 std::ostream& operator<<(std::ostream& out, Token o) {
-    out << o.value;
+    out << "{ " << o.value << " " << o.type << " }";
     return out;
 }
 
@@ -151,6 +176,73 @@ class AtomicParser {
     std::vector<std::shared_ptr<transition_t>> dcon;
     std::vector<std::shared_ptr<transition_t>> lambda;
     std::shared_ptr<ta_t> ta;
+
+    /**
+     * Takes the tokens, and classifies them further
+     */
+    std::vector<Token> tokenize_classify(const std::string& condition) {
+
+        std::vector<Token> tokens;
+        std::regex token_regex(R"((==|!=|<=|>=|&&|\|\||[()<>\+\-\*/%])|([A-Za-z_]\w*(?:\.bag\([^\)]+\)|\.bagSize\(\))?)|(\d+\.\d+|\d+)|(\".*?\"|\'.*?\'))");
+
+        std::smatch match;
+        std::string s = condition;
+
+        while (std::regex_search(s, match, token_regex)) {
+            std::string token_str = match[0];
+
+            Token token;
+            token.value = token_str;
+
+            if (operators.find(token_str) != operators.end()) {
+                token.type = TokenType::OPERATOR;
+            } else if (std::regex_match(token_str, std::regex(R"(\d+\.\d+|\d+)"))) {
+                token.type = TokenType::CONSTANT;
+            } else if (std::regex_match(token_str, std::regex(R"(\".*?\"|\'.*?\')"))) {
+                token.type = TokenType::CONSTANT;
+            } else {
+                token.type = TokenType::UNKNOWN;
+            }
+
+            tokens.push_back(token);
+            s = match.suffix();
+        }
+
+        // Classify UNKNOWN tokens clearly
+        std::unordered_set<std::string> state_vars, params, input_ports, output_ports;
+        for (const auto& s : state_set) state_vars.insert(s.variable);
+        for (auto& [key, _] : parameters.items()) params.insert(key);
+        for (const auto& s : input) input_ports.insert(s.variable);
+        for (const auto& s : output) output_ports.insert(s.variable);
+
+        for (auto& token : tokens) {
+            if (token.type == TokenType::UNKNOWN) {
+
+                std::string base_var = token.value;
+
+                // Check if token contains .bag() or .bagSize()
+                size_t pos = token.value.find('.');
+                if (pos != std::string::npos) {
+                    base_var = token.value.substr(0, pos);
+                }
+
+                if (input_ports.find(base_var) != input_ports.end()) {
+                    token.type = TokenType::INPUT_PORT;
+                } else if (output_ports.find(base_var) != output_ports.end()) {
+                    token.type = TokenType::OUTPUT_PORT;
+                } else if (state_vars.find(base_var) != state_vars.end()) {
+                    token.type = TokenType::STATE_VARIABLE;
+                } else if (params.find(base_var) != params.end()) {
+                    token.type = TokenType::PARAMETER;
+                } else {
+                    token.type = TokenType::CONSTANT;
+                }
+            }
+        }
+
+        return tokens;
+    }
+
 
     private:
     json DEVSMap;

@@ -30,93 +30,74 @@ class CadmiumAtomicParser : public AtomicParser {
     private:
     std::string indent = "";
 
-    std::vector<Token> tokenize_condition(const std::string& condition) {
-        std::vector<Token> tokens;
-        std::regex token_regex(R"((==|!=|<=|>=|&&|\|\||[()<>\+\-\*/%])|([A-Za-z_]\w*)|(\d+\.\d+|\d+)|(\".*?\"|\'.*?\'))");
-        std::smatch match;
-        std::string s = condition;
-    
-        while (std::regex_search(s, match, token_regex)) {
-            std::string token_str = match[0];
-    
-            Token token;
-            token.value = token_str;
-    
-            if (operators.find(token_str) != operators.end()) {
-                token.type = TokenType::OPERATOR;
-            } else if (std::regex_match(token_str, std::regex(R"(\d+\.\d+|\d+)"))) {
-                token.type = TokenType::CONSTANT;
-            } else if (std::regex_match(token_str, std::regex(R"(\".*?\"|\'.*?\')"))) {
-                token.type = TokenType::CONSTANT;
-            } else {
-                // Initially mark as unknown; we'll classify next
-                token.type = TokenType::UNKNOWN;
-            }
-    
-            tokens.push_back(token);
-            s = match.suffix();
-        }
-    
-        return tokens;
-    }
+    std::string reconstruct_condition(const std::vector<Token>& tokens, 
+                                  const std::string& state_obj = "state") {
+    std::ostringstream oss;
 
-    void classify_tokens(std::vector<Token>& tokens,
-                     const std::vector<object_t>& state_set,
-                     const json& parameters) {
+    std::regex bag_regex(R"((\w+)\.bag\((-?\d+)\))");
+    std::regex bagSize_regex(R"((\w+)\.bagSize\(\))");
+    std::smatch match;
 
-        std::unordered_set<std::string> state_vars, params;
-        for (const auto& s : state_set) state_vars.insert(s.variable);
-        for (auto& [key, _] : parameters.items()) params.insert(key);
+    for (auto& token : tokens) {
+        switch (token.type) {
+            case TokenType::OPERATOR:
+                oss << " " << token.value << " ";
+                break;
 
-        for (auto& token : tokens) {
-            if (token.type == TokenType::UNKNOWN) {
-                if (state_vars.find(token.value) != state_vars.end()) {
-                    token.type = TokenType::STATE_VARIABLE;
-                } else if (params.find(token.value) != params.end()) {
-                    token.type = TokenType::PARAMETER;
-                } else {
-                    // If not found anywhere, assume constant or error
-                    token.type = TokenType::CONSTANT; // Or handle as an error
+            case TokenType::STATE_VARIABLE:
+                oss << state_obj << "." << token.value;
+                break;
+
+            case TokenType::PARAMETER:
+                oss << "params." << token.value;
+                break;
+
+            case TokenType::INPUT_PORT:
+                // Check for bagSize()
+                if (std::regex_match(token.value, match, bagSize_regex)) {
+                    std::string port_name = match[1];
+                    oss << port_name << "->getBag().size()";
                 }
-            }
+                // Check for bag(index)
+                else if (std::regex_match(token.value, match, bag_regex)) {
+                    std::string port_name = match[1];
+                    int index = std::stoi(match[2]);
+
+                    if (index >= 0) {
+                        oss << port_name << "->getBag().at(" << index << ")";
+                    } else {
+                        oss << port_name << "->getBag().at(" 
+                            << port_name << "->getBag().size() - " << -index << ")";
+                    }
+                } else {
+                    oss << token.value;
+                }
+                break;
+
+            case TokenType::OUTPUT_PORT:
+                oss << token.value;
+                break;
+
+            case TokenType::CONSTANT:
+                oss << token.value;
+                break;
+
+            default:
+                oss << token.value;
         }
     }
 
-    std::string reconstruct_condition(const std::vector<Token>& tokens, const std::string& state_obj = "state") {
-        std::ostringstream oss;
-    
-        for (auto& token : tokens) {
-            switch (token.type) {
-                case TokenType::OPERATOR:
-                    oss << " " << token.value << " ";
-                    break;
-                case TokenType::STATE_VARIABLE:
-                    oss << state_obj << "." << token.value;
-                    break;
-                case TokenType::PARAMETER:
-                    oss << token.value;
-                    break;
-                case TokenType::CONSTANT:
-                    oss << token.value;
-                    break;
-                default:
-                    oss << token.value; // Fallback
-            }
-        }
-        return oss.str();
-    }
+    return oss.str();
+}
 
     
-    std::string generate_if_else_processed(const std::shared_ptr<transition_t>& transition,
+    std::string generate_if_else(const std::shared_ptr<transition_t>& transition,
                                        const std::string& state_obj,
-                                       const std::vector<object_t>& state_set,
-                                       const json& parameters,
                                        const std::string& indent = "\t") {
         std::ostringstream oss;
 
         if (!transition->condition.empty()) {
-            auto tokens = tokenize_condition(transition->condition);
-            classify_tokens(tokens, state_set, parameters);
+            auto tokens = tokenize_classify(transition->condition);
             std::string processed_condition = reconstruct_condition(tokens, state_obj);
 
             if (transition->condition == "otherwise") {
@@ -129,8 +110,7 @@ class CadmiumAtomicParser : public AtomicParser {
         // State assignments
         for (const auto& state : transition->new_state) {
 
-            auto expr_tokens = tokenize_condition(state.expression);
-            classify_tokens(expr_tokens, state_set, parameters);
+            auto expr_tokens = tokenize_classify(state.expression);
             auto processed_expression = reconstruct_condition(expr_tokens, state_obj);
 
             oss << indent << "\t" << state_obj << "." << state.state_variable << " = "
@@ -139,7 +119,7 @@ class CadmiumAtomicParser : public AtomicParser {
 
         // Nested conditions
         for (const auto& nested_transition : transition->nested) {
-            oss << generate_if_else_processed(nested_transition, state_obj, state_set, parameters, indent + "\t");
+            oss << generate_if_else(nested_transition, state_obj, indent + "\t");
         }
 
         if (!transition->condition.empty()) {
@@ -151,7 +131,7 @@ class CadmiumAtomicParser : public AtomicParser {
 
 
     public:
-    CadmiumAtomicParser(std::string fileName): AtomicParser(fileName, false) {}
+    CadmiumAtomicParser(std::string fileName, bool flag): AtomicParser(fileName, flag) {}
 
     std::string make_state() {
         std::string struct_name = model_name + "State";
@@ -197,7 +177,7 @@ class CadmiumAtomicParser : public AtomicParser {
         oss << "\tvoid internalTransition(" << model_name << "State& state) const override {\n";
 
         for(auto& transition : dint) {
-            oss << generate_if_else_processed(transition, "state", state_set, parameters, "\t\t");
+            oss << generate_if_else(transition, "state", "\t\t");
         }
         oss << "\t}\n";
 
@@ -205,15 +185,42 @@ class CadmiumAtomicParser : public AtomicParser {
     }
     
     std::string make_external_transition() {
-        return "TODO";
+        std::ostringstream oss;
+
+        oss << "\tvoid externalTransition(" << model_name << "State& state, double e) const override {\n";
+
+        for(auto& transition : dext) {
+            oss << generate_if_else(transition, "state", "\t\t");
+        }
+        oss << "\t}\n";
+
+        return oss.str();
     }
     
     std::string make_confluent_transition() {
-        return "TODO";
+        std::ostringstream oss;
+
+        oss << "\tvoid confluentTransition(" << model_name << "State& state, double e) const override {\n";
+
+        for(auto& transition : dext) {
+            oss << generate_if_else(transition, "state", "\t\t");
+        }
+        oss << "\t}\n";
+
+        return oss.str();
     }
     
     std::string make_lambda() {
-        return "TODO";
+        std::ostringstream oss;
+
+        oss << "\tvoid externalTransition(" << model_name << "State& state, double e) const override {\n";
+
+        for(auto& transition : dext) {
+            oss << generate_if_else(transition, "state", "\t\t");
+        }
+        oss << "\t}\n";
+
+        return oss.str();
     }
     
     std::string make_ta() {

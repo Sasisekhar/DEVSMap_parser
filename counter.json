@@ -23,48 +23,48 @@
             "otherwise": {}
         },
         "delta_ext": {
-            "direction_in != null": {
-                "countUp": "direction_in"
+            "direction_in.bagSize() != 0": {
+                "countUp": "direction_in.bag(-1)"
             },
-            "increment_in != null": {
-                "increment": "increment_in"
+            "increment_in.bagSize() != 0": {
+                "increment": "increment_in.bag(-1)"
             },
             "otherwise": {
-                "countUp": "direction_in",
-                "increment": "increment_in"
+                "countUp": "direction_in.bag(-1)",
+                "increment": "increment_in.bag(-1)"
             }
         },
         "delta_con": {
-            "direction_in != null": {
+            "direction_in.bagSize() != 0": {
                 "direction_in == true": {
                     "count": "count + increment",
-                    "countUp": "direction_in"
+                    "countUp": "direction_in.bag(-1)"
                 },
                 "direction_in == false": {
                     "count": "count - increment",
-                    "countUp": "direction_in"
+                    "countUp": "direction_in.bag(-1)"
                 }
             },
-            "increment_in != null": {
+            "increment_in.bagSize() != 0": {
                 "countUp == true": {
-                    "count": "count + increment_in",
-                    "increment": "increment_in"
+                    "count": "count + increment_in.bag(-1)",
+                    "increment": "increment_in.bag(-1)"
                 },
                 "countUp == false": {
-                    "count": "count - increment_in",
-                    "increment": "increment_in"
+                    "count": "count - increment_in.bag(-1)",
+                    "increment": "increment_in.bag(-1)"
                 }
             },
             "otherwise": {
                 "direction_in == true": {
-                    "count": "count + increment_in",
-                    "increment": "increment_in",
-                    "countUp": "direction_in"
+                    "count": "count + increment_in.bag(-1)",
+                    "increment": "increment_in.bag(-1)",
+                    "countUp": "direction_in.bag(-1)"
                 },
                 "direction_in == false": {
-                    "count": "count - increment_in",
-                    "increment": "increment_in",
-                    "countUp": "direction_in"
+                    "count": "count - increment_in.bag(-1)",
+                    "increment": "increment_in.bag(-1)",
+                    "countUp": "direction_in.bag(-1)"
                 }
             }
         },
