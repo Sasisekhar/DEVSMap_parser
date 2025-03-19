@@ -19,6 +19,7 @@
  * 
  * TODO list:
  * - Assert "Otherwise"
+ * - Get initial state
  */
 
 #ifndef ATOMIC_PARSER_HPP
@@ -112,7 +113,7 @@ struct transition_t{
     std::vector<state_t> new_state;
     std::vector<std::shared_ptr<transition_t>> nested;
 
-    transition_t(const std::string& cond = "") : condition(cond) {}
+    transition_t(std::string c = "") : condition(std::move(c)) {}
 };
 std::ostream& operator<<(std::ostream& out, const transition_t& t) {
     if (!t.condition.empty()) {
@@ -136,13 +137,12 @@ std::ostream& operator<<(std::ostream& out, const transition_t& t) {
     return out;
 }
 
-struct ta_t {
-    std::string condition;
+struct ta_t : transition_t {
     std::string expression; // Only non-empty at leaf nodes
     std::vector<std::shared_ptr<ta_t>> nested;
 
     ta_t(std::string c = "", std::string e = "")
-        : condition(std::move(c)), expression(std::move(e)) {}
+        : transition_t(c), expression(std::move(e)) {}
 };
 std::ostream& operator<<(std::ostream& out, const ta_t& t) {
     if (!t.condition.empty())
@@ -164,7 +164,6 @@ std::ostream& operator<<(std::ostream& out, const ta_t& t) {
 class AtomicParser {
 
     protected:
-    std::string model_name;
     std::vector<std::string> sets;
     json parameters;
     json model;
@@ -175,7 +174,7 @@ class AtomicParser {
     std::vector<std::shared_ptr<transition_t>> dext;
     std::vector<std::shared_ptr<transition_t>> dcon;
     std::vector<std::shared_ptr<transition_t>> lambda;
-    std::shared_ptr<ta_t> ta;
+    std::vector<std::shared_ptr<ta_t>> ta;
 
     /**
      * Takes the tokens, and classifies them further
@@ -297,7 +296,7 @@ class AtomicParser {
         }
     }
 
-    void parse_sxy() {
+    void parse_xys() {
         for(auto& [key, value] : model.items()) {
             if(key == "s") {
                 for(auto& [sv, dt] : value.items()) {
@@ -360,12 +359,14 @@ class AtomicParser {
         for (auto& [condition, transition_json] : model["lambda"].items()) {
             lambda.push_back(parse_transitions(transition_json, condition));
         }
-        
-        ta = parse_ta(model["ta"]);
+        for (auto& [condition, transition_json] : model["ta"].items()) {
+            ta .push_back(parse_ta(transition_json, condition));
+        }
     
     }
 
     public:
+    std::string model_name;
     AtomicParser(std::string fileName, bool verbose = true) {
         std::ifstream atomicFile(fileName);
         DEVSMap = json::parse(atomicFile);
@@ -375,7 +376,7 @@ class AtomicParser {
 
         model = DEVSMap.at(model_name);
 
-        parse_sxy();
+        parse_xys();
 
         parse_transitions();
 
@@ -404,7 +405,11 @@ class AtomicParser {
             for (const auto& t : lambda) {
                 std::cout << *t;
             }
-            std::cout << "\nta transitions:\n" << *ta;
+            std::cout << "\tta transitions:\n";
+            for (const auto& t : ta) {
+                std::cout << *t;
+            }
+            std::cout << std::endl;
         }
 
     }

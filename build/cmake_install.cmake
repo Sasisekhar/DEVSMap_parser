@@ -1,4 +1,4 @@
-# Install script for directory: /home/sasisekhar/RA/DEVSMap/DEVSMap_parser
+# Install script for directory: /home/sasisekhar/Desktop/My_Files_Linux/RA/DEVSMap/Counter
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/sasisekhar/RA/DEVSMap/DEVSMap_parser/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/sasisekhar/Desktop/My_Files_Linux/RA/DEVSMap/Counter/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

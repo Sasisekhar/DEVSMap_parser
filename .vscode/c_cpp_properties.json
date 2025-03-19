@@ -4,7 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${CADMIUM}/../json/include/**"
+                "${CADMIUM}/../json/include/**",
+                "${CADMIUM}"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

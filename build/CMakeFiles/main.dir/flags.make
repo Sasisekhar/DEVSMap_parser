@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/sasisekhar/RA/DEVSMap/DEVSMap_parser/. -I/home/sasisekhar/RA/DEVSMap/DEVSMap_parser/include -I/home/sasisekhar/cadmium_v2/include -I/home/sasisekhar/cadmium_v2/include/../json/include
+CXX_INCLUDES = -I/home/sasisekhar/Desktop/My_Files_Linux/RA/DEVSMap/Counter/. -I/home/sasisekhar/Desktop/My_Files_Linux/RA/DEVSMap/Counter/include -I/home/sasisekhar/cadmium_v2/include -I/home/sasisekhar/cadmium_v2/include/../json/include
 
 CXX_FLAGS = -std=gnu++2b
 

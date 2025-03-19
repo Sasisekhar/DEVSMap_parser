@@ -19,6 +19,7 @@
  * 
  * TODO list:
  * - Assert "Otherwise"
+ * - Add include sets
  */
 
 #ifndef CADMIUM_ATOMIC_PARSER_HPP
@@ -49,7 +50,7 @@ class CadmiumAtomicParser : public AtomicParser {
                 break;
 
             case TokenType::PARAMETER:
-                oss << "params." << token.value;
+                oss << token.value;
                 break;
 
             case TokenType::INPUT_PORT:
@@ -90,95 +91,208 @@ class CadmiumAtomicParser : public AtomicParser {
     return oss.str();
 }
 
-    
-    std::string generate_if_else(const std::shared_ptr<transition_t>& transition,
-                                       const std::string& state_obj,
-                                       const std::string& indent = "\t") {
+    /**
+     * @brief Generates the if-else ladder for the transition functions and the output function
+     * 
+     * @param vec_transition 
+     * @param state_obj 
+     * @param transition_flag 
+     * @param indent 
+     * @return std::string 
+     */
+    std::string generate_if_else(   const std::vector<std::shared_ptr<transition_t>> vec_transition,
+                                    const std::string& state_obj,
+                                    const bool transition_flag,
+                                    const std::string& indent = "\t") {
         std::ostringstream oss;
+        bool first_flag = true;
+        bool only_otherwise = false;
 
-        if (!transition->condition.empty()) {
-            auto tokens = tokenize_classify(transition->condition);
-            std::string processed_condition = reconstruct_condition(tokens, state_obj);
+        for(auto& transition : vec_transition) {
+            if (!transition->condition.empty()) {
+                auto tokens = tokenize_classify(transition->condition);
+                std::string processed_condition = reconstruct_condition(tokens, state_obj);
 
-            if (transition->condition == "otherwise") {
-                oss << indent << "else {\n";
-            } else {
-                oss << indent << "if (" << processed_condition << ") {\n";
+                if (transition->condition == "otherwise") {
+                    if(vec_transition.size() > 1) { //if only otherwise, no else{}
+                        oss << indent << "else {\n";
+                    } else {
+                        oss << "\n";
+                        only_otherwise = true;
+                    }
+                } else {
+                    if(first_flag){ //first if, then else if
+                        first_flag = false;
+                        oss << indent << "if (" << processed_condition << ") {\n";
+                    } else {
+                        oss << indent << "else if (" << processed_condition << ") {\n";
+                    }
+                }
             }
-        }
 
-        // State assignments
-        for (const auto& state : transition->new_state) {
+            if(transition_flag){
+                // State assignments
+                for (const auto& state : transition->new_state) {
+                    auto variable = reconstruct_condition(tokenize_classify(state.state_variable), state_obj);
+                    auto expression = reconstruct_condition(tokenize_classify(state.expression), state_obj);
 
-            auto expr_tokens = tokenize_classify(state.expression);
-            auto processed_expression = reconstruct_condition(expr_tokens, state_obj);
+                    oss << indent << "\t" << variable << " = " << expression << ";\n";
+                }
+            } else {
+                for (const auto& state : transition->new_state) {
+                    auto variable = reconstruct_condition(tokenize_classify(state.state_variable), state_obj);
+                    auto expression = reconstruct_condition(tokenize_classify(state.expression), state_obj);
 
-            oss << indent << "\t" << state_obj << "." << state.state_variable << " = "
-                << processed_expression << ";\n";
-        }
+                    oss << indent << "\t" << variable << "->addMessage(" << expression << ");\n";
+                }
+            }
 
-        // Nested conditions
-        for (const auto& nested_transition : transition->nested) {
-            oss << generate_if_else(nested_transition, state_obj, indent + "\t");
-        }
+            // Nested conditions
+            oss << generate_if_else(transition->nested, state_obj, transition_flag, indent + "\t");
 
-        if (!transition->condition.empty()) {
-            oss << indent << "}\n";
+            if (!transition->condition.empty()) {
+                if(only_otherwise) {
+                    oss << "\n";
+                } else {
+                    oss << indent << "}\n";
+                }
+            }
+
         }
 
         return oss.str();
     }
 
+    /**
+     * @brief Generates the if-else ladder for the time advance fucntion
+     * 
+     * @param vec_transition 
+     * @param state_obj 
+     * @param transition_flag 
+     * @param indent 
+     * @return std::string 
+     */
+    std::string generate_if_else(   const std::vector<std::shared_ptr<ta_t>> vec_transition,
+                                    const std::string& state_obj,
+                                    const std::string& indent = "\t") {
+        std::ostringstream oss;
+        bool first_flag = true;
+        bool only_otherwise = false;
+
+        for(auto& transition : vec_transition) {
+            if (!transition->condition.empty()) {
+                auto tokens = tokenize_classify(transition->condition);
+                std::string processed_condition = reconstruct_condition(tokens, state_obj);
+
+                if (transition->condition == "otherwise") {
+                    if(vec_transition.size() > 1) { //if only otherwise, no else{}
+                        oss << indent << "else {\n";
+                    } else {
+                        oss << "\n";
+                        only_otherwise = true;
+                    }
+                } else {
+                    if(first_flag){ //first if, then else if
+                        first_flag = false;
+                        oss << indent << "if (" << processed_condition << ") {\n";
+                    } else {
+                        oss << indent << "else if (" << processed_condition << ") {\n";
+                    }
+                }
+            }
+
+            
+            if(transition->expression != "") {
+                auto expression = reconstruct_condition(tokenize_classify(transition->expression), state_obj);
+                oss << indent << "\treturn " << expression << ";\n";
+            }
+
+            // Nested conditions
+            oss << generate_if_else(transition->nested, state_obj, indent + "\t");
+
+            if (!transition->condition.empty()) {
+                if(only_otherwise) {
+                    oss << "\n";
+                } else {
+                    oss << indent << "}\n";
+                }
+            }
+
+        }
+
+        return oss.str();
+    }
 
     public:
     CadmiumAtomicParser(std::string fileName, bool flag): AtomicParser(fileName, flag) {}
 
     std::string make_state() {
         std::string struct_name = model_name + "State";
-        std::string state_struct = indent + "struct " + struct_name + " {\n";
+        std::string state_struct = "struct " + struct_name + " {\n";
 
         for(auto& sv : state_set) {
-            state_struct += indent + "\t" + sv.datatype + " " + sv.variable + ";\n";
+            state_struct += "\t" + sv.datatype + " " + sv.variable + ";\n";
         }
 
         state_struct += "\n";
 
         // Default constructor
-        state_struct += indent + "\t" + struct_name + "() : ";
+        state_struct += "\t" + struct_name + "() : ";
         for(size_t i = 0; i < state_set.size(); ++i) {
             state_struct += state_set[i].variable + "()";
             state_struct += (i < state_set.size() - 1) ? ", " : " {}\n";
         }
 
-        state_struct += indent + "};\n\n";
+        state_struct += "};\n";
 
         // operator<< overload
-        state_struct += indent + "std::ostream& operator<<(std::ostream& out, const " + struct_name + "& s) {\n";
-        state_struct += indent + "\tout << \"{\"";
+        state_struct += "std::ostream& operator<<(std::ostream& out, const " + struct_name + "& s) {\n";
+        state_struct += "\tout << \"{\"";
         for(size_t i = 0; i < state_set.size(); ++i) {
             state_struct += " << s." + state_set[i].variable;
             if(i < state_set.size() - 1)
                 state_struct += " << \", \"";
         }
         state_struct += " << \"}\";\n";
-        state_struct += indent + "\treturn out;\n";
-        state_struct += indent + "}\n";
+        state_struct += "\treturn out;\n";
+        state_struct += "}\n";
 
         return state_struct;
     }
 
     std::string make_ports() {
-        return "TODO";
+        std::ostringstream oss;
+
+        for(auto& port : input) {
+            oss << "\tPort<" << port.datatype << "> " << port.variable << ";\n";
+        }
+        for(auto& port : output) {
+            oss << "\tPort<" << port.datatype << "> " << port.variable << ";\n";
+        }
+
+        oss << std::endl;
+
+        //Constructor
+        oss << "\t" << model_name << "(const std::string id) : Atomic<" << model_name << "State>(id, " << model_name << "State()) {\n";
+
+        for(auto& port : input) {
+            oss << "\t\t" << port.variable << " = addInPort<" << port.datatype << ">(\"" << port.variable << "\");\n";
+        }
+        for(auto& port : output) {
+            oss << "\t\t" << port.variable << " = addOutPort<" << port.datatype << ">(\"" << port.variable << "\");\n";
+        }
+
+        oss << "\t}\n";
+
+
+        return oss.str();
     }
     
     std::string make_internal_transition() {
         std::ostringstream oss;
 
         oss << "\tvoid internalTransition(" << model_name << "State& state) const override {\n";
-
-        for(auto& transition : dint) {
-            oss << generate_if_else(transition, "state", "\t\t");
-        }
+        oss << generate_if_else(dint, "state", _GLIBCXX_TR1_BETA_FUNCTION_TCC, "\t\t");
         oss << "\t}\n";
 
         return oss.str();
@@ -188,10 +302,7 @@ class CadmiumAtomicParser : public AtomicParser {
         std::ostringstream oss;
 
         oss << "\tvoid externalTransition(" << model_name << "State& state, double e) const override {\n";
-
-        for(auto& transition : dext) {
-            oss << generate_if_else(transition, "state", "\t\t");
-        }
+        oss << generate_if_else(dext, "state", true, "\t\t");
         oss << "\t}\n";
 
         return oss.str();
@@ -201,10 +312,7 @@ class CadmiumAtomicParser : public AtomicParser {
         std::ostringstream oss;
 
         oss << "\tvoid confluentTransition(" << model_name << "State& state, double e) const override {\n";
-
-        for(auto& transition : dext) {
-            oss << generate_if_else(transition, "state", "\t\t");
-        }
+        oss << generate_if_else(dcon, "state", true, "\t\t");
         oss << "\t}\n";
 
         return oss.str();
@@ -213,22 +321,53 @@ class CadmiumAtomicParser : public AtomicParser {
     std::string make_lambda() {
         std::ostringstream oss;
 
-        oss << "\tvoid externalTransition(" << model_name << "State& state, double e) const override {\n";
-
-        for(auto& transition : dext) {
-            oss << generate_if_else(transition, "state", "\t\t");
-        }
+        oss << "\tvoid output(const " << model_name << "State& state) const override {\n";
+        oss << generate_if_else(lambda, "state", false, "\t\t");
         oss << "\t}\n";
 
         return oss.str();
     }
     
     std::string make_ta() {
-        return "TODO";
+        std::ostringstream oss;
+
+        oss << "\t[[nodiscard]] double timeAdvance(const " << model_name << "State& state) const override {\n";
+        oss << generate_if_else(ta, "state", "\t\t");
+        oss << "\t}\n";
+
+        return oss.str();
     }
     
     std::string make_model() {
-        return "TODO";
+        std::ostringstream oss;
+
+        std::string MODEL_NAME = model_name;
+        std::transform(MODEL_NAME.begin(), MODEL_NAME.end(), MODEL_NAME.begin(), ::toupper);
+
+        oss << "#ifndef __DEVSMAP__PARSER__" << MODEL_NAME << "_HPP__\n";
+        oss << "#define __DEVSMAP__PARSER__" << MODEL_NAME << "_HPP__\n\n";
+        oss << "#include <iostream>\n#include \"cadmium/modeling/devs/atomic.hpp\"\n\n";
+
+        oss << "using namespace cadmium;\n\n";
+
+        oss << make_state() << std::endl;
+
+        oss << "class " << model_name << ": public Atomic<" << model_name << "State>{\n\n";
+        oss << "\tpublic:\n\n";
+        
+        oss << make_ports() << std::endl; //also constructor
+
+        oss << make_internal_transition() << std::endl;
+        oss << make_external_transition() << std::endl;
+        oss << make_confluent_transition() << std::endl;
+        oss << make_lambda() << std::endl;
+        oss << make_ta() << std::endl;
+
+        oss << "};\n\n";
+
+        oss << "#endif //__DEVSMAP__PARSER__" << MODEL_NAME << "_HPP__\n";
+
+        return oss.str();
     }
     
 

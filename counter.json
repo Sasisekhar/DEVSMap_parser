@@ -1,17 +1,17 @@
 {
     "counter": {
         "s": {
-            "count": "integer",
-            "increment": "integer_nonNeg",
-            "countUp": "boolean",
-            "sigma": "time"
+            "count": "int",
+            "increment": "unsigned int",
+            "countUp": "bool",
+            "sigma": "double"
         },
         "x": {
-            "direction_in": "boolean",
-            "increment_in": "integer_nonNeg"
+            "direction_in": "bool",
+            "increment_in": "int"
         },
         "y": {
-            "count_out": "integer"
+            "count_out": "int"
         },
         "delta_int": {
             "countUp == true": {
@@ -36,11 +36,11 @@
         },
         "delta_con": {
             "direction_in.bagSize() != 0": {
-                "direction_in == true": {
+                "direction_in.bag(-1) == true": {
                     "count": "count + increment",
                     "countUp": "direction_in.bag(-1)"
                 },
-                "direction_in == false": {
+                "direction_in.bag(-1) == false": {
                     "count": "count - increment",
                     "countUp": "direction_in.bag(-1)"
                 }
@@ -56,12 +56,12 @@
                 }
             },
             "otherwise": {
-                "direction_in == true": {
+                "direction_in.bag(-1) == true": {
                     "count": "count + increment_in.bag(-1)",
                     "increment": "increment_in.bag(-1)",
                     "countUp": "direction_in.bag(-1)"
                 },
-                "direction_in == false": {
+                "direction_in.bag(-1) == false": {
                     "count": "count - increment_in.bag(-1)",
                     "increment": "increment_in.bag(-1)",
                     "countUp": "direction_in.bag(-1)"
