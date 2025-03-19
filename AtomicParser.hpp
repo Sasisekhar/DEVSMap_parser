@@ -137,12 +137,13 @@ std::ostream& operator<<(std::ostream& out, const transition_t& t) {
     return out;
 }
 
-struct ta_t : transition_t {
+struct ta_t {
+    std::string condition;
     std::string expression; // Only non-empty at leaf nodes
     std::vector<std::shared_ptr<ta_t>> nested;
 
     ta_t(std::string c = "", std::string e = "")
-        : transition_t(c), expression(std::move(e)) {}
+        : condition(std::move(c)), expression(std::move(e)) {}
 };
 std::ostream& operator<<(std::ostream& out, const ta_t& t) {
     if (!t.condition.empty())
