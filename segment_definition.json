@@ -1,0 +1,22 @@
+{
+    "value_time": {
+        "value": {
+            "domain": "integer",
+            "min": "0",
+            "max": "+inf",
+            "dimension": ["1"]
+        },
+        "time": {
+            "domain": "floating_point",
+            "min": "-inf",
+            "max": "+inf",
+            "dimension": ["1"]
+        }
+    },
+    "segment": {
+        "pair": {
+            "domain": "value_time",
+            "dimension": ["n"]
+        }
+    }
+}

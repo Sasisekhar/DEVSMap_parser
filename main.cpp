@@ -2,7 +2,7 @@
 
 int main() {
     
-    auto parser = CadmiumAtomicParser("counter.json", false);
+    auto parser = CadmiumAtomicParser("generator.json", false);
     std::string filename = parser.model_name + ".hpp";
     std::ofstream file(filename.c_str());
     file << parser.make_model();
