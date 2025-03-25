@@ -1,5 +1,5 @@
-#ifndef __DEVSMAP__PARSER__GENERATOR_HPP__
-#define __DEVSMAP__PARSER__GENERATOR_HPP__
+#ifndef __DEVSMAP__PARSER__GENERATOR__HPP__
+#define __DEVSMAP__PARSER__GENERATOR__HPP__
 
 #include <iostream>
 #include "cadmium/modeling/devs/atomic.hpp"
@@ -57,3 +57,4 @@ class generator: public Atomic<generatorState>{
 };
 
 #endif //__DEVSMAP__PARSER__GENERATOR_HPP__
+

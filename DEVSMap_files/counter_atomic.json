@@ -78,8 +78,7 @@
         }
     },
     "include_sets": [
-        "default_sets.json",
-        "integer_nonNeg"
+        "default_sets.json"
     ],
     "parameters": {}
 }

@@ -344,8 +344,8 @@ class CadmiumAtomicParser : public AtomicParser {
         std::string MODEL_NAME = model_name;
         std::transform(MODEL_NAME.begin(), MODEL_NAME.end(), MODEL_NAME.begin(), ::toupper);
 
-        oss << "#ifndef __DEVSMAP__PARSER__" << MODEL_NAME << "_HPP__\n";
-        oss << "#define __DEVSMAP__PARSER__" << MODEL_NAME << "_HPP__\n\n";
+        oss << "#ifndef __DEVSMAP__PARSER__" << MODEL_NAME << "__HPP__\n";
+        oss << "#define __DEVSMAP__PARSER__" << MODEL_NAME << "__HPP__\n\n";
         oss << "#include <iostream>\n#include \"cadmium/modeling/devs/atomic.hpp\"\n\n";
 
         oss << "using namespace cadmium;\n\n";

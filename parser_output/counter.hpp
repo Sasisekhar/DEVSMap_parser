@@ -1,5 +1,5 @@
-#ifndef __DEVSMAP__PARSER__COUNTER_HPP__
-#define __DEVSMAP__PARSER__COUNTER_HPP__
+#ifndef __DEVSMAP__PARSER__COUNTER__HPP__
+#define __DEVSMAP__PARSER__COUNTER__HPP__
 
 #include <iostream>
 #include "cadmium/modeling/devs/atomic.hpp"
@@ -107,3 +107,4 @@ class counter: public Atomic<counterState>{
 };
 
 #endif //__DEVSMAP__PARSER__COUNTER_HPP__
+

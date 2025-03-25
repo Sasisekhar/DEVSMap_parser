@@ -1,0 +1,31 @@
+{
+    "counter_tester": {
+        "x": {
+            "direction": "bool"
+        },
+        "y": {
+            "count": "int"
+        },
+        "components": {
+            "counter": "counter_model",
+            "generator": "generator_model"
+        },
+        "eic": [{
+            "port_from": "direction",
+            "port_to": "direction_in",
+            "component_to": "counter_model"
+        }],
+        "eoc": [{
+            "port_from": "count_out",
+            "port_to": "count",
+            "component_from": "counter_model"
+        }],
+        "ic": [{
+            "port_from": "inc_out",
+            "port_to": "increment_in",
+            "component_to": "counter_model",
+            "component_from": "generator_model"
+        }]
+    },
+    "include_sets": ["default_sets.json"]
+}
