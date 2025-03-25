@@ -12,7 +12,7 @@ struct generatorState {
 	generatorState() : inc() {}
 };
 std::ostream& operator<<(std::ostream& out, const generatorState& s) {
-	out << "{" << s.inc << "}";
+	out << "{" << "inc:" << s.inc << "}";
 	return out;
 }
 

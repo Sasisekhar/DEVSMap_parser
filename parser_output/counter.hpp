@@ -12,10 +12,10 @@ struct counterState {
 	unsigned int increment;
 	double sigma;
 
-	counterState() : count(), countUp(), increment(), sigma() {}
+	counterState() : count(0), countUp(true), increment(0), sigma(1.0) {}
 };
 std::ostream& operator<<(std::ostream& out, const counterState& s) {
-	out << "{" << s.count << ", " << s.countUp << ", " << s.increment << ", " << s.sigma << "}";
+	out << "{" << "count:" << s.count << ", " << "countUp:" << s.countUp << ", " << "increment:" << s.increment << ", " << "sigma:" << s.sigma << "}";
 	return out;
 }
 

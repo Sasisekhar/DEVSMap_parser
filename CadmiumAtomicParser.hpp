@@ -249,7 +249,7 @@ class CadmiumAtomicParser : public AtomicParser {
         state_struct += "std::ostream& operator<<(std::ostream& out, const " + struct_name + "& s) {\n";
         state_struct += "\tout << \"{\"";
         for(size_t i = 0; i < state_set.size(); ++i) {
-            state_struct += " << s." + state_set[i].variable;
+            state_struct += " << \"" + state_set[i].variable + ":\"" + " << s." + state_set[i].variable;
             if(i < state_set.size() - 1)
                 state_struct += " << \", \"";
         }
