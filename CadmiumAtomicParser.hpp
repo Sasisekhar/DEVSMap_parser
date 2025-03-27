@@ -228,36 +228,43 @@ class CadmiumAtomicParser : public AtomicParser {
 
     std::string make_state() {
         std::string struct_name = model_name + "State";
-        std::string state_struct = "struct " + struct_name + " {\n";
+
+        std::ostringstream state_struct;
+        state_struct << "struct " << struct_name << " {\n";
 
         for(auto& sv : state_set) {
-            state_struct += "\t" + sv.datatype + " " + sv.variable + ";\n";
+            state_struct << "\t" << sv.datatype << " " << sv.variable << ";\n";
         }
 
-        state_struct += "\n";
+        state_struct << "\n";
 
         // Default constructor
-        state_struct += "\t" + struct_name + "() : ";
+        state_struct << "\t" << struct_name << "(";
         for(size_t i = 0; i < state_set.size(); ++i) {
-            state_struct += state_set[i].variable + "()";
-            state_struct += (i < state_set.size() - 1) ? ", " : " {}\n";
+            state_struct << state_set[i].datatype << " _" << state_set[i].variable;
+            state_struct << ((i < state_set.size() - 1) ? ", " : " ):");
         }
 
-        state_struct += "};\n";
+        for(size_t i = 0; i < state_set.size(); ++i) {
+            state_struct << state_set[i].variable << "(" << "_" << state_set[i].variable << ")";
+            state_struct << ((i < state_set.size() - 1) ? ", " : " {}\n");
+        }
+
+        state_struct << "};\n";
 
         // operator<< overload
-        state_struct += "std::ostream& operator<<(std::ostream& out, const " + struct_name + "& s) {\n";
-        state_struct += "\tout << \"{\"";
+        state_struct << "std::ostream& operator<<(std::ostream& out, const " << struct_name << "& s) {\n";
+        state_struct << "\tout << \"{\"";
         for(size_t i = 0; i < state_set.size(); ++i) {
-            state_struct += " << \"" + state_set[i].variable + ":\"" + " << s." + state_set[i].variable;
+            state_struct << " << \"" << state_set[i].variable << ":\"" << " << s." << state_set[i].variable;
             if(i < state_set.size() - 1)
-                state_struct += " << \", \"";
+                state_struct << " << \", \"";
         }
-        state_struct += " << \"}\";\n";
-        state_struct += "\treturn out;\n";
-        state_struct += "}\n";
+        state_struct << " << \"}\";\n";
+        state_struct << "\treturn out;\n";
+        state_struct << "}\n";
 
-        return state_struct;
+        return state_struct.str();
     }
 
     std::string make_ports() {
@@ -273,7 +280,19 @@ class CadmiumAtomicParser : public AtomicParser {
         oss << std::endl;
 
         //Constructor
-        oss << "\t" << model_name << "(const std::string id) : Atomic<" << model_name << "State>(id, " << model_name << "State()) {\n";
+        oss << "\t" << model_name << "(const std::string id, ";
+
+        for(size_t i = 0; i < state_set.size(); ++i) {
+            oss << state_set[i].datatype << " _" << state_set[i].variable;
+            oss << ((i < state_set.size() - 1) ? ", " : " ): ");
+        }
+        
+        oss << "Atomic<" << model_name << "State>(id, " << model_name << "State(";
+
+        for(size_t i = 0; i < state_set.size(); ++i) {
+            oss << "_" << state_set[i].variable;
+            oss << ((i < state_set.size() - 1) ? ", " : ")) {\n");
+        }
 
         for(auto& port : input) {
             oss << "\t\t" << port.variable << " = addInPort<" << port.datatype << ">(\"" << port.variable << "\");\n";
@@ -338,7 +357,7 @@ class CadmiumAtomicParser : public AtomicParser {
         return oss.str();
     }
     
-    std::string make_model() {
+    std::pair<std::string, std::vector<object_t>> make_model() {
         std::ostringstream oss;
 
         std::string MODEL_NAME = model_name;
@@ -367,7 +386,7 @@ class CadmiumAtomicParser : public AtomicParser {
 
         oss << "#endif //__DEVSMAP__PARSER__" << MODEL_NAME << "_HPP__\n";
 
-        return oss.str();
+        return {oss.str(), state_set};
     }
     
 

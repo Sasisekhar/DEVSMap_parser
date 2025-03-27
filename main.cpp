@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
             auto parser = CadmiumAtomicParser(dir_entry.path(), false);
             std::string filename = "parser_output/" + parser.model_name + ".hpp";
             std::ofstream file(filename.c_str());
-            file << parser.make_model() << std::endl;
+            file << parser.make_model().first << std::endl;
             file.close();
         } else if(file_type == "coupled") {
             auto parser = CadmiumCoupledParser(dir_entry.path(), false);

@@ -12,7 +12,7 @@ struct counterState {
 	unsigned int increment;
 	double sigma;
 
-	counterState() : count(0), countUp(true), increment(0), sigma(1.0) {}
+	counterState(int _count, bool _countUp, unsigned int _increment, double _sigma ):count(_count), countUp(_countUp), increment(_increment), sigma(_sigma) {}
 };
 std::ostream& operator<<(std::ostream& out, const counterState& s) {
 	out << "{" << "count:" << s.count << ", " << "countUp:" << s.countUp << ", " << "increment:" << s.increment << ", " << "sigma:" << s.sigma << "}";
@@ -27,7 +27,7 @@ class counter: public Atomic<counterState>{
 	Port<int> increment_in;
 	Port<int> count_out;
 
-	counter(const std::string id) : Atomic<counterState>(id, counterState()) {
+	counter(const std::string id, int _count, bool _countUp, unsigned int _increment, double _sigma ): Atomic<counterState>(id, counterState(_count, _countUp, _increment, _sigma)) {
 		direction_in = addInPort<bool>("direction_in");
 		increment_in = addInPort<int>("increment_in");
 		count_out = addOutPort<int>("count_out");

@@ -37,15 +37,13 @@
 
 using json = nlohmann::json;
 
-const std::string fixed_keys[] = {"include_sets", "parameters"};
+const std::string fixed_keys[] = {"include_sets", "parameters", "graph"};
 
 const std::unordered_set<std::string> operators = {
     "==", "!=", "<=", ">=", "<", ">", "&&", "||",
     "(", ")", "+", "-", "*", "/", "%",
     ".bag", ".bagSize"
 };
-
-///////////////////////////////////DATATYPES///////////////////////////////////
 
 /////////////////////////////////////PARSER/////////////////////////////////////
 
@@ -129,7 +127,6 @@ class AtomicParser {
 
         return tokens;
     }
-
 
     private:
     json DEVSMap;
@@ -255,7 +252,7 @@ class AtomicParser {
 
     public:
     std::string model_name;
-    AtomicParser(std::string fileName, bool verbose = true) {
+    AtomicParser(std::string fileName, bool verbose = false) {
         std::ifstream atomicFile(fileName);
         DEVSMap = json::parse(atomicFile);
         atomicFile.close();
@@ -302,14 +299,7 @@ class AtomicParser {
 
     }
     
-    virtual std::string make_state() = 0;
-    virtual std::string make_ports() = 0;
-    virtual std::string make_internal_transition() = 0;
-    virtual std::string make_external_transition() = 0;
-    virtual std::string make_confluent_transition() = 0;
-    virtual std::string make_lambda() = 0;
-    virtual std::string make_ta() = 0;
-    virtual std::string make_model() = 0;
+    virtual std::pair<std::string, std::vector<object_t>> make_model() = 0;
 
 };
 

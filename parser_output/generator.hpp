@@ -9,7 +9,7 @@ using namespace cadmium;
 struct generatorState {
 	int inc;
 
-	generatorState() : inc() {}
+	generatorState(int _inc ):inc(_inc) {}
 };
 std::ostream& operator<<(std::ostream& out, const generatorState& s) {
 	out << "{" << "inc:" << s.inc << "}";
@@ -22,7 +22,7 @@ class generator: public Atomic<generatorState>{
 
 	Port<int> inc_out;
 
-	generator(const std::string id) : Atomic<generatorState>(id, generatorState()) {
+	generator(const std::string id, int _inc ): Atomic<generatorState>(id, generatorState(_inc)) {
 		inc_out = addOutPort<int>("inc_out");
 	}
 

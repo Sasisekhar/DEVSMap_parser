@@ -1,0 +1,11 @@
+{
+    "model_under_test": {
+        "model": "counter_tester_coupled",
+        "initial_state_model": "counter_tester_init_state",
+        "parameters_model": ""
+    },
+    "experimental_frame": {},
+    "cpic":{},
+    "pocc": {},
+    "time_span": "20.5"
+}

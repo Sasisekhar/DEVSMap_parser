@@ -180,7 +180,7 @@ class CoupledParser {
     public:
     std::string model_name;
 
-    CoupledParser(std::string fileName, bool verbose = true) {
+    CoupledParser(std::string fileName, std::vector<object_t> state_set, bool verbose = false) {
         std::ifstream coupledFile(fileName);
         DEVSMap = json::parse(coupledFile);
         coupledFile.close();
@@ -214,10 +214,6 @@ class CoupledParser {
 
     }
 
-
-    virtual std::string make_ports() = 0;
-    virtual std::string make_components() = 0;
-    virtual std::string make_couplings() = 0;
     virtual std::string make_model() = 0;
 };
 
