@@ -1,8 +1,8 @@
 {
     "model_under_test": {
-        "model": "counter_tester_coupled",
-        "initial_state_model": "counter_tester_init_state",
-        "parameters_model": ""
+        "model": "counter_tester_coupled.json",
+        "initial_state": "counter_tester_init_state.json",
+        "parameters": ""
     },
     "experimental_frame": {},
     "cpic":{},

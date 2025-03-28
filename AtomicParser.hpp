@@ -250,9 +250,7 @@ class AtomicParser {
     
     }
 
-    public:
-    std::string model_name;
-    AtomicParser(std::string fileName, bool verbose = false) {
+    void parse(std::string fileName) {
         std::ifstream atomicFile(fileName);
         DEVSMap = json::parse(atomicFile);
         atomicFile.close();
@@ -264,6 +262,14 @@ class AtomicParser {
         parse_xys();
 
         parse_transitions();
+    }
+
+    public:
+    std::string model_name;
+
+    AtomicParser(std::string fileName, std::vector<object_t> _state_set, bool verbose = false) {
+
+        parse(fileName);
 
         if (verbose) {
             std::cout << "model name: " << model_name << "\n";
@@ -299,7 +305,7 @@ class AtomicParser {
 
     }
     
-    virtual std::pair<std::string, std::vector<object_t>> make_model() = 0;
+    virtual std::string make_model() = 0;
 
 };
 

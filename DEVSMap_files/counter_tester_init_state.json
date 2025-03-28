@@ -1,0 +1,15 @@
+{
+    "init_states": {
+        "counter_tester": {
+            "counter": {
+                "count": "0",
+                "increment": "1",
+                "countUp": "true",
+                "sigma": "1.0"
+            },
+            "generator": {
+                "inc": "5"
+            }
+        }
+    }
+}

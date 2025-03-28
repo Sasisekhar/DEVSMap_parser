@@ -224,7 +224,7 @@ class CadmiumAtomicParser : public AtomicParser {
     }
 
     public:
-    CadmiumAtomicParser(std::string fileName, bool flag): AtomicParser(fileName, flag) {}
+    CadmiumAtomicParser(std::string fileName, std::vector<object_t> _state_set, bool flag = false): AtomicParser(fileName, _state_set, flag) {}
 
     std::string make_state() {
         std::string struct_name = model_name + "State";
@@ -357,7 +357,7 @@ class CadmiumAtomicParser : public AtomicParser {
         return oss.str();
     }
     
-    std::pair<std::string, std::vector<object_t>> make_model() {
+    std::string make_model() {
         std::ostringstream oss;
 
         std::string MODEL_NAME = model_name;
@@ -386,7 +386,7 @@ class CadmiumAtomicParser : public AtomicParser {
 
         oss << "#endif //__DEVSMAP__PARSER__" << MODEL_NAME << "_HPP__\n";
 
-        return {oss.str(), state_set};
+        return oss.str();
     }
     
 

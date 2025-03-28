@@ -30,7 +30,7 @@ class CadmiumCoupledParser : public CoupledParser {
     std::string file_path;
 
     public:
-    CadmiumCoupledParser(std::string fileName, bool flag): CoupledParser(fileName, flag) {
+    CadmiumCoupledParser(std::string fileName, std::vector<object_t> state_set, bool flag = false): CoupledParser(fileName, state_set, flag) {
         std::vector<std::string> result;
         std::stringstream ss(fileName);
         std::string segment;

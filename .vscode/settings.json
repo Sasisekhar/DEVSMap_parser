@@ -73,6 +73,12 @@
         "stop_token": "cpp",
         "thread": "cpp",
         "cfenv": "cpp",
-        "source_location": "cpp"
+        "source_location": "cpp",
+        "strstream": "cpp",
+        "list": "cpp",
+        "set": "cpp",
+        "mutex": "cpp",
+        "stdfloat": "cpp",
+        "typeindex": "cpp"
     }
 }
