@@ -5,12 +5,12 @@
 
 int main(int argc, char** argv) {
 
-    if(argc < 2) {
-        std::cerr << "Error: Too few arguments. Typical usage:\n" << argv[0] << " <Path to JSON file>" << std::endl;
+    if(argc < 3) {
+        std::cerr << "Error: Too few arguments. Typical usage:\n" << argv[0] << " <Path to Experiment JSON file> <Output directory>" << std::endl;
         return 0;
     }
 
-    Parser<CadmiumAtomicParser, CadmiumCoupledParser> parser(argv[1]);
+    Parser<CadmiumAtomicParser, CadmiumCoupledParser> parser(argv[1], argv[2]);
 
     return 0;
 }
